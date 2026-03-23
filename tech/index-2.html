@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoPay3 — Real Recurring Payments for Web3</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050810;
+    --bg2: #080d1a;
+    --surface: #0d1528;
+    --border: rgba(56, 189, 248, 0.12);
+    --accent: #38bdf8;
+    --accent2: #818cf8;
+    --accent3: #34d399;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glow: rgba(56, 189, 248, 0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    background: rgba(5,8,16,0.8);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: #fff;
+  }
+  .logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+    font-family: 'DM Mono', monospace;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  .nav-cta {
+    background: var(--accent);
+    color: #050810 !important;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 500 !important;
+    transition: box-shadow 0.2s, transform 0.2s !important;
+  }
+  .nav-cta:hover {
+    box-shadow: 0 0 24px var(--glow);
+    transform: translateY(-1px);
+    color: #050810 !important;
+  }
+
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 40px 80px;
+    overflow: hidden;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+  }
+  .orb-1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(56,189,248,0.18) 0%, transparent 70%);
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  .orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(129,140,248,0.12) 0%, transparent 70%);
+    bottom: 0; right: -100px;
+    animation: pulse 10s ease-in-out infinite reverse;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--accent3);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent3);
+    animation: blink 2s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    max-width: 900px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.8s 0.15s ease both;
+  }
+  .hero h1 .line-blue { color: var(--accent); }
+  .hero h1 .line-purple { color: var(--accent2); }
+
+  .hero-sub {
+    margin-top: 28px;
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+
+  .hero-actions {
+    margin-top: 48px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.8s 0.45s ease both;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #050810;
+    border: none;
+    padding: 16px 36px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: -0.01em;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 40px rgba(56,189,248,0.5);
+    transform: translateY(-2px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 16px 36px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(56,189,248,0.05);
+  }
+
+  .hero-diagram {
+    margin-top: 80px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.8s 0.6s ease both;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 28px;
+    text-align: center;
+    min-width: 160px;
+    position: relative;
+  }
+  .flow-step .step-icon { font-size: 28px; margin-bottom: 8px; }
+  .flow-step .step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .flow-step .step-text { font-size: 13px; color: var(--muted); }
+
+  .flow-arrow { font-size: 20px; color: var(--border); padding: 0 8px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  .section-sub {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+  }
+
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 60px;
+  }
+
+  .principle-card {
+    background: var(--bg2);
+    padding: 36px 32px;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .principle-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .principle-card:hover { background: var(--surface); }
+  .principle-card:hover::before { opacity: 1; }
+
+  .principle-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    opacity: 0.6;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+  }
+  .principle-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #fff;
+  }
+  .principle-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+  .how-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    margin-top: 60px;
+  }
+
+  .steps-list { display: flex; flex-direction: column; gap: 0; }
+
+  .step-item {
+    display: flex;
+    gap: 24px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .step-item:last-child { border-bottom: none; }
+
+  .step-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    min-width: 28px;
+    padding-top: 2px;
+  }
+  .step-content h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .step-content p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+  .terminal {
+    background: #0a0f1e;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(56,189,248,0.08);
+  }
+  .terminal-bar {
+    background: var(--surface);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c840; }
+  .terminal-title { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); margin-left: 8px; }
+
+  .terminal-body {
+    padding: 28px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.9;
+  }
+  .t-comment { color: #4a5568; }
+  .t-key { color: var(--accent2); }
+  .t-str { color: var(--accent3); }
+  .t-num { color: #fb923c; }
+  .t-fn { color: var(--accent); }
+  .t-ok { color: var(--accent3); }
+
+  .team-grid {
+    display: flex;
+    gap: 32px;
+    margin-top: 60px;
+    flex-wrap: wrap;
+  }
+
+  .team-card {
+    flex: 1;
+    min-width: 260px;
+    max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    transition: border-color 0.3s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .team-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: linear-gradient(to top, rgba(56,189,248,0.04), transparent);
+    pointer-events: none;
+  }
+  .team-card:hover { border-color: rgba(56,189,248,0.35); transform: translateY(-4px); }
+
+  .avatar-wrap {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    margin-bottom: 24px;
+    background: var(--bg2);
+  }
+  .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-placeholder {
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .team-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .team-role {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+  .team-bio { font-size: 14px; color: var(--muted); line-height: 1.65; }
+  .team-links { margin-top: 20px; display: flex; gap: 12px; }
+  .team-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .team-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  .cta-section {
+    text-align: center;
+    padding: 100px 60px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .cta-box {
+    background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(129,140,248,0.08));
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 24px;
+    padding: 80px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-box::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(56,189,248,0.1), transparent 70%);
+    pointer-events: none;
+  }
+  .cta-box h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .cta-box p { color: var(--muted); font-size: 17px; margin-bottom: 40px; position: relative; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+  .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--muted); }
+  .footer-logo span { color: var(--accent); }
+  .footer-note { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); opacity: 0.5; }
+
+  .full-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── MARKET OPPORTUNITY ── */
+  .market-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 60px;
+  }
+
+  .market-stat {
+    background: var(--bg2);
+    padding: 48px 36px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+  .market-stat:hover { background: var(--surface); }
+
+  .market-stat::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+    opacity: 0.3;
+  }
+
+  .stat-super {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 12px;
+  }
+
+  .stat-number {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .stat-source {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0.4;
+    margin-top: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── BUSINESS MODEL ── */
+  .model-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    margin-top: 60px;
+    align-items: start;
+  }
+
+  .model-layer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .model-layer:hover { border-color: rgba(56,189,248,0.3); transform: translateY(-3px); }
+
+  .layer-header {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .layer-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .layer-icon-open { background: rgba(52, 211, 153, 0.12); }
+  .layer-icon-closed { background: rgba(56, 189, 248, 0.12); }
+
+  .layer-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-left: auto;
+  }
+
+  .badge-open { background: rgba(52,211,153,0.1); color: var(--accent3); border: 1px solid rgba(52,211,153,0.2); }
+  .badge-closed { background: rgba(56,189,248,0.1); color: var(--accent); border: 1px solid rgba(56,189,248,0.2); }
+
+  .layer-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .layer-body { padding: 28px; }
+
+  .layer-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .layer-points { display: flex; flex-direction: column; gap: 10px; }
+
+  .layer-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .layer-point::before {
+    content: '▸';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Fee flow diagram */
+  .fee-flow {
+    margin-top: 48px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+  }
+
+  .fee-flow-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 28px;
+  }
+
+  .fee-flow-nodes {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .fee-node {
+    text-align: center;
+    padding: 16px 20px;
+    min-width: 120px;
+  }
+
+  .fee-node-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .fee-node-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  .fee-node-sub {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .fee-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+  }
+
+  .fee-arrow-line {
+    font-size: 16px;
+    color: var(--accent);
+    opacity: 0.5;
+  }
+
+  .fee-arrow-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--accent3);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.15);
+    padding: 2px 8px;
+    border-radius: 100px;
+  }
+
+  /* ── MOAT ── */
+  .moat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 60px;
+  }
+
+  .moat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .moat-card:hover { border-color: rgba(129,140,248,0.35); transform: translateY(-3px); }
+
+  .moat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle at top right, rgba(129,140,248,0.06), transparent 70%);
+    pointer-events: none;
+  }
+
+  .moat-icon {
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+
+  .moat-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #fff;
+  }
+
+  .moat-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .moat-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .moat-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 4px;
+    background: rgba(129,140,248,0.08);
+    color: var(--accent2);
+    border: 1px solid rgba(129,140,248,0.15);
+  }
+
+  /* ── ROADMAP ── */
+  .roadmap-timeline {
+    margin-top: 60px;
+    position: relative;
+  }
+
+  .roadmap-timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), rgba(56,189,248,0.1));
+  }
+
+  .roadmap-item {
+    display: flex;
+    gap: 32px;
+    padding: 0 0 48px 0;
+    position: relative;
+  }
+
+  .roadmap-dot-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 40px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .roadmap-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--bg);
+    margin-top: 6px;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .roadmap-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 16px var(--glow);
+  }
+
+  .roadmap-dot.done {
+    background: var(--accent3);
+    border-color: var(--accent3);
+  }
+
+  .roadmap-content {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    transition: border-color 0.2s;
+  }
+  .roadmap-content:hover { border-color: rgba(56,189,248,0.25); }
+
+  .roadmap-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .roadmap-phase {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .roadmap-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .status-done { background: rgba(52,211,153,0.1); color: var(--accent3); border: 1px solid rgba(52,211,153,0.2); }
+  .status-active { background: rgba(56,189,248,0.1); color: var(--accent); border: 1px solid rgba(56,189,248,0.2); animation: statusPulse 2s infinite; }
+  .status-next { background: rgba(129,140,248,0.08); color: var(--accent2); border: 1px solid rgba(129,140,248,0.15); }
+  .status-future { background: rgba(100,116,139,0.08); color: var(--muted); border: 1px solid rgba(100,116,139,0.15); }
+
+  @keyframes statusPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.3); }
+    50% { box-shadow: 0 0 0 4px rgba(56,189,248,0); }
+  }
+
+  .roadmap-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .roadmap-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 16px;
+  }
+
+  .roadmap-milestones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .milestone {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+  }
+
+  .milestone.done-m { color: var(--accent3); border-color: rgba(52,211,153,0.15); background: rgba(52,211,153,0.05); }
+
+  /* investor badge strip */
+  .investor-strip {
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(135deg, rgba(129,140,248,0.06), rgba(56,189,248,0.06));
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .strip-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .strip-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .strip-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  .strip-value span { color: var(--accent); }
+
+  .strip-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border);
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    section { padding: 60px 24px; }
+    .how-wrapper { grid-template-columns: 1fr; gap: 40px; }
+    .market-stats { grid-template-columns: 1fr; }
+    .model-wrapper { grid-template-columns: 1fr; }
+    .moat-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+    .full-divider { margin: 0 24px; }
+    .cta-box { padding: 48px 28px; }
+    .investor-strip { padding: 32px 24px; }
+    .strip-divider { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Auto<span>Pay3</span></div>
+  <ul class="nav-links">
+    <li><a href="#vision">Vision</a></li>
+    <li><a href="#principles">Principles</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#market">Opportunity</a></li>
+    <li><a href="#model">Business Model</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#contact" class="nav-cta">Get Early Access</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero" id="vision">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    ERC-4337 · Self-Custody · Real Auto-Pay
+  </div>
+
+  <h1>
+    Recurring payments<br>
+    <span class="line-blue">without trust.</span><br>
+    <span class="line-purple">Without limits.</span>
+  </h1>
+
+  <p class="hero-sub">
+    The power of Stripe-level subscriptions — enforced entirely on-chain. No unlimited approvals. No private key exposure. No middlemen.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#contact" class="btn-primary">Join the Waitlist</a>
+    <a href="#how" class="btn-ghost">See How It Works →</a>
+  </div>
+
+  <div class="hero-diagram">
+    <div class="flow-step">
+      <div class="step-icon">🔐</div>
+      <div class="step-label">Your Wallet</div>
+      <div class="step-text">Deposit once</div>
+    </div>
+    <div class="flow-arrow">──▶</div>
+    <div class="flow-step">
+      <div class="step-icon">📋</div>
+      <div class="step-label">Smart Contract</div>
+      <div class="step-text">Enforces rules</div>
+    </div>
+    <div class="flow-arrow">──▶</div>
+    <div class="flow-step">
+      <div class="step-icon">⚡</div>
+      <div class="step-label">EntryPoint</div>
+      <div class="step-text">ERC-4337 claim</div>
+    </div>
+    <div class="flow-arrow">──▶</div>
+    <div class="flow-step">
+      <div class="step-icon">✅</div>
+      <div class="step-label">Service</div>
+      <div class="step-text">Paid every 30d</div>
+    </div>
+  </div>
+</div>
+
+<hr class="full-divider">
+
+<!-- PRINCIPLES -->
+<section id="principles">
+  <div class="reveal">
+    <div class="section-label">// core principles</div>
+    <h2 class="section-title">Built different.<br>By design.</h2>
+    <p class="section-sub">Every principle is a deliberate choice to eliminate the attack surface that plagues today's Web3 payment flows.</p>
+  </div>
+
+  <div class="principles-grid reveal">
+    <div class="principle-card">
+      <div class="principle-num">01</div>
+      <div class="principle-title">No Unlimited Approve</div>
+      <div class="principle-desc">Tokens live inside a smart wallet — never approved to external contracts. Your funds, your rules.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-num">02</div>
+      <div class="principle-title">No Unlimited Deposit</div>
+      <div class="principle-desc">The wallet holds only what you put in. Services claim specific amounts — never open-ended access.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-num">03</div>
+      <div class="principle-title">No Private Key Trust</div>
+      <div class="principle-desc">Claims are authorized by on-chain subscription state, not by whoever holds a signing key.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-num">04</div>
+      <div class="principle-title">Contract-Based Automation</div>
+      <div class="principle-desc">The ERC-4337 EntryPoint enforces timing, caps, and whitelists — fully on-chain, fully auditable.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-num">05</div>
+      <div class="principle-title">Real Auto-Pay</div>
+      <div class="principle-desc">Services pull payment every 30 days without any user interaction. Truly set-and-forget subscriptions.</div>
+    </div>
+    <div class="principle-card">
+      <div class="principle-num">06</div>
+      <div class="principle-title">Simple and Safe UX</div>
+      <div class="principle-desc">One deposit into your smart wallet and you're done. Security and simplicity don't have to trade off.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider">
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-label reveal">// how it works</div>
+
+  <div class="how-wrapper">
+    <div>
+      <h2 class="section-title reveal">From deposit to<br>auto-pay in minutes.</h2>
+
+      <div class="steps-list reveal">
+        <div class="step-item">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h3>Deploy your smart wallet</h3>
+            <p>A lightweight ERC-4337 wallet is created for you — fully self-custodied, no third party ever touches your keys.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h3>Deposit once</h3>
+            <p>Fund your wallet with the tokens you want to use for subscriptions. That's the only action you'll ever take.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h3>Subscribe to a service</h3>
+            <p>On-chain subscription state is created: amount, interval, and the service's whitelisted address. All capped. All enforced.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h3>Let the contract do the rest</h3>
+            <p>Every billing cycle, the EntryPoint validates and executes the claim. No signatures needed. No wallet popups. No trust.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="terminal reveal">
+      <div class="terminal-bar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <span class="terminal-title">SubscriptionWallet.sol</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-comment">// User deposits once</span></div>
+        <div><span class="t-fn">deposit</span>(<span class="t-num">100</span> USDC);</div>
+        <br>
+        <div><span class="t-comment">// Subscribe to a service</span></div>
+        <div><span class="t-fn">subscribe</span>({</div>
+        <div>&nbsp;&nbsp;<span class="t-key">service</span>: <span class="t-str">0xABC…</span>,</div>
+        <div>&nbsp;&nbsp;<span class="t-key">amount</span>: <span class="t-num">10</span> USDC,</div>
+        <div>&nbsp;&nbsp;<span class="t-key">interval</span>: <span class="t-num">30</span> days,</div>
+        <div>});</div>
+        <br>
+        <div><span class="t-comment">// 30 days later — no action needed</span></div>
+        <div><span class="t-comment">// EntryPoint auto-executes:</span></div>
+        <div><span class="t-fn">validateAndClaim</span>(<span class="t-str">subId</span>);</div>
+        <div><span class="t-comment">//  → verifies timing ✓</span></div>
+        <div><span class="t-comment">//  → verifies cap ✓</span></div>
+        <div><span class="t-comment">//  → verifies whitelist ✓</span></div>
+        <div><span class="t-ok">// ✓ Payment settled on-chain</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider">
+
+<!-- ═══════════════════════════════════════════════════
+     INVESTOR SECTION 1 — MARKET OPPORTUNITY
+════════════════════════════════════════════════════ -->
+<section id="market">
+  <div class="reveal">
+    <div class="section-label">// market opportunity</div>
+    <h2 class="section-title">A $600B problem<br>with no real solution.</h2>
+    <p class="section-sub">Recurring payments are the backbone of the digital economy. Web3 has been missing a trustless, self-custodied layer to support them — until now.</p>
+  </div>
+
+  <div class="market-stats reveal">
+    <div class="market-stat">
+      <div class="stat-super">Global subscription economy</div>
+      <div class="stat-number">$600B+</div>
+      <div class="stat-label">Annual subscription revenue processed worldwide — growing 18% YoY across SaaS, media, fintech.</div>
+      <div class="stat-source">Source: Zuora Subscription Economy Index</div>
+    </div>
+    <div class="market-stat">
+      <div class="stat-super">Onchain stablecoin volume</div>
+      <div class="stat-number">$28T</div>
+      <div class="stat-label">Settled on-chain in 2024. The rails exist. Recurring payment infrastructure does not.</div>
+      <div class="stat-source">Source: Visa Onchain Analytics</div>
+    </div>
+    <div class="market-stat">
+      <div class="stat-super">Web3 SaaS & dApp services</div>
+      <div class="stat-number">15,000+</div>
+      <div class="stat-label">Active dApps and Web3 protocols that currently have no native recurring billing option.</div>
+      <div class="stat-source">Source: DappRadar, 2024</div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTOR STRIP -->
+<div class="investor-strip reveal">
+  <div class="strip-item">
+    <div class="strip-label">Stage</div>
+    <div class="strip-value">Pre-<span>Seed</span></div>
+  </div>
+  <div class="strip-divider"></div>
+  <div class="strip-item">
+    <div class="strip-label">Protocol Status</div>
+    <div class="strip-value">Contracts <span>Live</span></div>
+  </div>
+  <div class="strip-divider"></div>
+  <div class="strip-item">
+    <div class="strip-label">Chain</div>
+    <div class="strip-value">EVM <span>Multi-chain</span></div>
+  </div>
+  <div class="strip-divider"></div>
+  <div class="strip-item">
+    <div class="strip-label">Revenue Model</div>
+    <div class="strip-value">Protocol <span>Fee</span></div>
+  </div>
+  <div class="strip-divider"></div>
+  <div class="strip-item">
+    <div class="strip-label">Open Source</div>
+    <div class="strip-value">Core <span>Yes</span></div>
+  </div>
+</div>
+
+<hr class="full-divider">
+
+<!-- ═══════════════════════════════════════════════════
+     INVESTOR SECTION 2 — BUSINESS MODEL
+════════════════════════════════════════════════════ -->
+<section id="model">
+  <div class="reveal">
+    <div class="section-label">// business model</div>
+    <h2 class="section-title">Open protocol.<br>Closed moat.</h2>
+    <p class="section-sub">The core contracts are open source — auditable, forkable, trustless. The UX layer, SDK, and developer community are where the business lives.</p>
+  </div>
+
+  <div class="model-wrapper reveal">
+    <div class="model-layer">
+      <div class="layer-header">
+        <div class="layer-icon layer-icon-open">🔓</div>
+        <div class="layer-title">Onchain Protocol Layer</div>
+        <span class="layer-badge badge-open">Open Source</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-desc">Smart contracts are fully open source and verifiable on-chain. Any dApp can integrate permissionlessly. Openness drives adoption — the more dApps use the protocol, the more valuable the network becomes.</div>
+        <div class="layer-points">
+          <div class="layer-point">SubscriptionWallet, WalletFactory, ServiceBase contracts — all auditable on Etherscan</div>
+          <div class="layer-point">ERC-4337 compliant — composable with the entire AA ecosystem</div>
+          <div class="layer-point">No dApp lock-in — pure opt-in integration. Trust is the acquisition channel.</div>
+          <div class="layer-point">Community audit incentives — bounties drive security and credibility</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="model-layer">
+      <div class="layer-header">
+        <div class="layer-icon layer-icon-closed">🔒</div>
+        <div class="layer-title">UX / SDK / Community Layer</div>
+        <span class="layer-badge badge-closed">Proprietary Moat</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-desc">The developer SDK, subscription dashboard, no-code integration tools, and builder community are proprietary. This is what creates sticky, compounding value — and where dApps pay to integrate at scale.</div>
+        <div class="layer-points">
+          <div class="layer-point">Plug-and-play SDK — dApps integrate in &lt;1 hour, not days of Solidity work</div>
+          <div class="layer-point">Hosted subscription dashboards for end-users — branded, white-label ready</div>
+          <div class="layer-point">Access to the AutoPay3 builder network — co-marketing, distribution, referrals</div>
+          <div class="layer-point">Analytics and billing management tools — the "Stripe Dashboard" of Web3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fee flow -->
+  <div class="fee-flow reveal">
+    <div class="fee-flow-title">// how we capture value — every claim, every cycle</div>
+    <div class="fee-flow-nodes">
+      <div class="fee-node">
+        <div class="fee-node-icon">👤</div>
+        <div class="fee-node-label">Subscriber</div>
+        <div class="fee-node-sub">Funds smart wallet</div>
+      </div>
+      <div class="fee-arrow">
+        <div class="fee-arrow-line">──▶</div>
+        <div class="fee-arrow-label">claim executes</div>
+      </div>
+      <div class="fee-node">
+        <div class="fee-node-icon">⚙️</div>
+        <div class="fee-node-label">AutoPay3 Protocol</div>
+        <div class="fee-node-sub">Validates &amp; routes</div>
+      </div>
+      <div class="fee-arrow">
+        <div class="fee-arrow-line">──▶</div>
+        <div class="fee-arrow-label">~0.5% fee retained</div>
+      </div>
+      <div class="fee-node">
+        <div class="fee-node-icon">🏢</div>
+        <div class="fee-node-label">dApp / Service</div>
+        <div class="fee-node-sub">Receives payment</div>
+      </div>
+      <div class="fee-arrow">
+        <div class="fee-arrow-line">──▶</div>
+        <div class="fee-arrow-label">SDK access fee</div>
+      </div>
+      <div class="fee-node">
+        <div class="fee-node-icon">💰</div>
+        <div class="fee-node-label">Protocol Revenue</div>
+        <div class="fee-node-sub">Scales with volume</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider">
+
+<!-- ═══════════════════════════════════════════════════
+     INVESTOR SECTION 3 — THE MOAT
+════════════════════════════════════════════════════ -->
+<section id="moat">
+  <div class="reveal">
+    <div class="section-label">// competitive moat</div>
+    <h2 class="section-title">Why AutoPay3<br>compounds over time.</h2>
+    <p class="section-sub">Network effects, developer lock-in, and a growing ecosystem of integrations create a moat that widens with every new dApp that joins.</p>
+  </div>
+
+  <div class="moat-grid reveal">
+    <div class="moat-card">
+      <div class="moat-icon">🌐</div>
+      <div class="moat-title">Protocol Network Effects</div>
+      <div class="moat-desc">Every new dApp that integrates AutoPay3 adds to the shared subscriber base. Users with a funded smart wallet can subscribe to any AutoPay3-connected service instantly — zero re-onboarding. The network grows with each integration.</div>
+      <div class="moat-tags">
+        <span class="moat-tag">Network effects</span>
+        <span class="moat-tag">Shared subscriber pool</span>
+        <span class="moat-tag">Zero re-onboarding</span>
+      </div>
+    </div>
+
+    <div class="moat-card">
+      <div class="moat-icon">🧱</div>
+      <div class="moat-title">Developer SDK Lock-In</div>
+      <div class="moat-desc">Once a dApp ships with the AutoPay3 SDK, migrating to a competing standard is a full engineering project. The SDK handles wallet creation, subscription state, gas abstraction, and the billing UI — replacing this entire stack has a high cost.</div>
+      <div class="moat-tags">
+        <span class="moat-tag">High switching cost</span>
+        <span class="moat-tag">Full billing stack</span>
+        <span class="moat-tag">Gas abstraction</span>
+      </div>
+    </div>
+
+    <div class="moat-card">
+      <div class="moat-icon">🏛️</div>
+      <div class="moat-title">Open Source Trust = Distribution</div>
+      <div class="moat-desc">Open sourcing the core protocol is itself a growth strategy. Auditable contracts build the trust that enterprise integrations, DAO treasuries, and regulated fintech products require. Forks increase visibility; contributors become users.</div>
+      <div class="moat-tags">
+        <span class="moat-tag">Trust flywheel</span>
+        <span class="moat-tag">DAO-ready</span>
+        <span class="moat-tag">Enterprise ready</span>
+      </div>
+    </div>
+
+    <div class="moat-card">
+      <div class="moat-icon">👥</div>
+      <div class="moat-title">Builder Community Layer</div>
+      <div class="moat-desc">The AutoPay3 developer community is itself a distribution channel. Builders who integrate early become advocates. We're building a co-marketing network where dApps promote each other within the shared subscription ecosystem.</div>
+      <div class="moat-tags">
+        <span class="moat-tag">Community flywheel</span>
+        <span class="moat-tag">Co-marketing</span>
+        <span class="moat-tag">Developer advocacy</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider">
+
+<!-- ═══════════════════════════════════════════════════
+     INVESTOR SECTION 4 — ROADMAP
+════════════════════════════════════════════════════ -->
+<section id="roadmap">
+  <div class="reveal">
+    <div class="section-label">// roadmap</div>
+    <h2 class="section-title">From protocol to platform.</h2>
+    <p class="section-sub">A clear path from working contracts to a multi-chain subscription infrastructure layer — with revenue at every stage.</p>
+  </div>
+
+  <div class="roadmap-timeline reveal">
+
+    <div class="roadmap-item">
+      <div class="roadmap-dot-wrap">
+        <div class="roadmap-dot done"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-meta">
+          <div class="roadmap-phase">Phase 1</div>
+          <span class="roadmap-status status-done">✓ Complete</span>
+        </div>
+        <div class="roadmap-title">Core Protocol — Contracts Done</div>
+        <div class="roadmap-desc">Full smart contract suite built, tested, and audited. ERC-4337 integration, timelocks, subscription state, multi-service support.</div>
+        <div class="roadmap-milestones">
+          <span class="milestone done-m">SubscriptionWallet.sol</span>
+          <span class="milestone done-m">WalletFactory.sol</span>
+          <span class="milestone done-m">ServiceBase.sol</span>
+          <span class="milestone done-m">ClaimBundlerHelper.sol</span>
+          <span class="milestone done-m">Adversarial test suite</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-dot-wrap">
+        <div class="roadmap-dot active"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-meta">
+          <div class="roadmap-phase">Phase 2</div>
+          <span class="roadmap-status status-active">In Progress</span>
+        </div>
+        <div class="roadmap-title">Testnet Launch &amp; Developer SDK</div>
+        <div class="roadmap-desc">Deploy on Polygon/Base testnet. Release developer SDK with React hooks and Wagmi adapters. Onboard first 5 integration partners.</div>
+        <div class="roadmap-milestones">
+          <span class="milestone">Polygon testnet deploy</span>
+          <span class="milestone">JS/TS SDK v1</span>
+          <span class="milestone">React hooks</span>
+          <span class="milestone">5 pilot dApps</span>
+          <span class="milestone">Docs site</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-dot-wrap">
+        <div class="roadmap-dot"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-meta">
+          <div class="roadmap-phase">Phase 3</div>
+          <span class="roadmap-status status-next">Next</span>
+        </div>
+        <div class="roadmap-title">Mainnet + Subscription Dashboard</div>
+        <div class="roadmap-desc">Mainnet deployment on Base + Polygon. Launch the subscriber-facing dashboard — a white-label billing portal dApps embed directly. Begin fee collection.</div>
+        <div class="roadmap-milestones">
+          <span class="milestone">Base mainnet</span>
+          <span class="milestone">Polygon mainnet</span>
+          <span class="milestone">White-label dashboard</span>
+          <span class="milestone">Fee collection live</span>
+          <span class="milestone">Security audit v2</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-dot-wrap">
+        <div class="roadmap-dot"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-meta">
+          <div class="roadmap-phase">Phase 4</div>
+          <span class="roadmap-status status-future">Planned</span>
+        </div>
+        <div class="roadmap-title">Multi-chain Expansion &amp; Enterprise Tier</div>
+        <div class="roadmap-desc">Expand to Arbitrum, Optimism, and Ethereum L1. Launch enterprise SDK tier with SLA, dedicated support, and advanced analytics. Target DAO treasuries and fintech protocols.</div>
+        <div class="roadmap-milestones">
+          <span class="milestone">Arbitrum / Optimism</span>
+          <span class="milestone">Ethereum L1</span>
+          <span class="milestone">Enterprise SDK</span>
+          <span class="milestone">DAO treasury module</span>
+          <span class="milestone">Analytics API</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="full-divider">
+
+<!-- TEAM -->
+<section id="team">
+  <div class="reveal">
+    <div class="section-label">// the team</div>
+    <h2 class="section-title">Built by builders.</h2>
+    <p class="section-sub">We've been in the trenches of Web3 development. We know the problems firsthand.</p>
+  </div>
+
+  <div class="team-grid reveal">
+    <div class="team-card">
+      <div class="avatar-wrap">
+        <div class="avatar-placeholder">G</div>
+      </div>
+      <div class="team-name">Garry</div>
+      <div class="team-role">Co-Founder · Business</div>
+      <div class="team-bio">Strategy, partnerships, and go-to-market. Bringing the vision to market and connecting the right dots in the Web3 ecosystem.</div>
+      <div class="team-links">
+        <a href="#" class="team-link">LinkedIn ↗</a>
+      </div>
+    </div>
+
+    <div class="team-card">
+      <div class="avatar-wrap">
+        <div class="avatar-placeholder">R</div>
+      </div>
+      <div class="team-name">Ruslan</div>
+      <div class="team-role">CTO · Engineering</div>
+      <div class="team-bio">Architecting the smart contract layer, ERC-4337 integration, and security model. Turning the protocol into production-ready infrastructure.</div>
+      <div class="team-links">
+        <a href="#" class="team-link">LinkedIn ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider">
+
+<!-- CTA -->
+<div class="cta-section" id="contact">
+  <div class="cta-box reveal">
+    <div class="section-label" style="justify-content: center; display: flex;">// early access</div>
+    <h2>Ready to kill the<br>approve button?</h2>
+    <p>We're onboarding early protocol partners and builders. Get in touch to shape the standard for Web3 subscriptions.</p>
+    <a href="mailto:hello@autopay3.xyz" class="btn-primary">Request Early Access</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Auto<span>Pay3</span></div>
+  <div class="footer-note">© 2025 AutoPay3 · Built on ERC-4337</div>
+</footer>
+
+<script>
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  document.querySelectorAll('.principles-grid .principle-card').forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.07}s`;
+  });
+</script>
+</body>
+</html>

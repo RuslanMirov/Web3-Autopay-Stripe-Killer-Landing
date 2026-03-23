@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoPay3 — The Subscription Infrastructure for Web3</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:     #0C0C0B;
+  --ink2:    #2A2A28;
+  --ink3:    #6B6B65;
+  --paper:   #F8F6F1;
+  --paper2:  #EFEDE7;
+  --paper3:  #E5E2DA;
+  --gold:    #B8965A;
+  --gold2:   #D4AF72;
+  --green:   #1C3A2A;
+  --line:    rgba(12,12,11,0.10);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 64px;
+  height: 72px;
+  background: rgba(248,246,241,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+
+.nav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.nav-logo em { font-style: italic; color: var(--gold); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink3);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--ink); }
+
+.nav-btn {
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+  padding: 10px 24px;
+  border-radius: 2px;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: background 0.2s !important;
+}
+.nav-btn:hover { background: var(--green) !important; }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding-top: 72px;
+}
+
+.hero-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 64px 80px 64px;
+  border-right: 1px solid var(--line);
+}
+
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 36px;
+  opacity: 0;
+  animation: fadeUp 0.9s 0.1s ease forwards;
+}
+
+.eyebrow-line {
+  width: 32px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(52px, 5.5vw, 82px);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 36px;
+  opacity: 0;
+  animation: fadeUp 0.9s 0.22s ease forwards;
+}
+
+.hero-title strong {
+  font-weight: 600;
+  font-style: italic;
+  color: var(--green);
+}
+
+.hero-body {
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1.75;
+  color: var(--ink3);
+  max-width: 480px;
+  margin-bottom: 52px;
+  opacity: 0;
+  animation: fadeUp 0.9s 0.35s ease forwards;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  opacity: 0;
+  animation: fadeUp 0.9s 0.48s ease forwards;
+}
+
+.btn-dark {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 15px 36px;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: background 0.2s, transform 0.2s;
+  display: inline-block;
+}
+.btn-dark:hover { background: var(--green); transform: translateY(-1px); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--ink);
+  padding: 14px 36px;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--line);
+  transition: border-color 0.2s, color 0.2s;
+  display: inline-block;
+}
+.btn-outline:hover { border-color: var(--ink); }
+
+/* hero right — big number panel */
+.hero-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 64px;
+  background: var(--ink);
+  opacity: 0;
+  animation: fadeIn 1.1s 0.3s ease forwards;
+}
+
+.hero-right-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 60px;
+}
+
+.hero-stat-big {
+  margin-bottom: 20px;
+}
+
+.hero-stat-big .num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(64px, 8vw, 110px);
+  font-weight: 300;
+  color: var(--paper);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+.hero-stat-big .num em {
+  font-style: italic;
+  color: var(--gold2);
+}
+
+.hero-stat-big .denom {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(248,246,241,0.45);
+  letter-spacing: 0.06em;
+  margin-top: 12px;
+}
+
+.hero-divider {
+  width: 40px;
+  height: 1px;
+  background: rgba(248,246,241,0.15);
+  margin: 40px 0;
+}
+
+.hero-mini-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.mini-stat .num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--paper);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.mini-stat .num em { font-style: italic; color: var(--gold2); }
+.mini-stat .label {
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(248,246,241,0.45);
+  line-height: 1.5;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+
+/* ── SHARED SECTION STYLES ── */
+.section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 120px 64px;
+}
+
+.section-full {
+  padding: 0;
+  max-width: 100%;
+}
+
+.divider { border: none; border-top: 1px solid var(--line); }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 28px;
+}
+.tag::before { content:''; display:block; width:24px; height:1px; background:var(--gold); }
+
+.h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(38px, 4vw, 62px);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.h2 em { font-style: italic; font-weight: 300; color: var(--green); }
+.h2 strong { font-weight: 600; }
+
+.lead {
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1.75;
+  color: var(--ink3);
+  max-width: 540px;
+}
+
+/* ── MARKET NUMBERS ── */
+.market-section {
+  background: var(--paper2);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.market-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 100px 64px;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.market-intro {}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.market-cell {
+  background: var(--paper2);
+  padding: 44px 36px;
+  transition: background 0.2s;
+}
+.market-cell:hover { background: var(--paper); }
+
+.market-cell .fig {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 52px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.market-cell .fig em { font-style: italic; color: var(--gold); }
+
+.market-cell .fig-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink2);
+  letter-spacing: 0.01em;
+  margin-bottom: 8px;
+}
+
+.market-cell .fig-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.6;
+}
+
+.market-cell .source {
+  font-size: 10px;
+  color: var(--ink3);
+  opacity: 0.5;
+  letter-spacing: 0.04em;
+  margin-top: 16px;
+  text-transform: uppercase;
+}
+
+/* ── PROBLEM / SOLUTION ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-top: 60px;
+}
+
+.two-col-cell {
+  background: var(--paper);
+  padding: 52px 48px;
+}
+
+.cell-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  padding: 5px 12px;
+  display: inline-block;
+  border-radius: 2px;
+}
+.cell-eyebrow.problem { background: rgba(180,60,40,0.07); color: #B43C28; }
+.cell-eyebrow.solution { background: rgba(28,58,42,0.07); color: var(--green); }
+
+.cell-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.cell-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cell-list li {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.6;
+  padding-left: 20px;
+  position: relative;
+}
+.cell-list li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--ink3);
+  opacity: 0.4;
+}
+.cell-list.solution-list li::before { content: '✓'; color: var(--green); opacity: 0.7; }
+
+/* ── BUSINESS MODEL ── */
+.model-section { background: var(--ink); }
+
+.model-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 100px 64px;
+}
+
+.model-tag {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.model-tag::before { content:''; display:block; width:24px; height:1px; background:var(--gold); }
+
+.model-h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 4vw, 58px);
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--paper);
+  margin-bottom: 16px;
+}
+.model-h2 em { font-style: italic; color: var(--gold2); }
+
+.model-lead {
+  font-size: 16px;
+  font-weight: 300;
+  color: rgba(248,246,241,0.5);
+  max-width: 520px;
+  line-height: 1.75;
+  margin-bottom: 72px;
+}
+
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(248,246,241,0.06);
+  border: 1px solid rgba(248,246,241,0.06);
+  margin-bottom: 72px;
+}
+
+.model-card {
+  background: var(--ink);
+  padding: 44px 36px;
+  transition: background 0.2s;
+  position: relative;
+}
+.model-card:hover { background: var(--green); }
+
+.model-card-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 48px;
+  font-weight: 300;
+  color: rgba(184,150,90,0.2);
+  line-height: 1;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+.model-card-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--paper);
+  letter-spacing: 0.01em;
+  margin-bottom: 12px;
+}
+
+.model-card-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(248,246,241,0.45);
+  line-height: 1.7;
+}
+
+/* revenue callout */
+.revenue-callout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(248,246,241,0.06);
+  border: 1px solid rgba(248,246,241,0.06);
+}
+
+.rev-cell {
+  background: var(--ink);
+  padding: 48px 40px;
+}
+
+.rev-cell-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+
+.rev-cell-headline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--paper);
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+.rev-cell-headline em { font-style: italic; color: var(--gold2); }
+
+.rev-cell-body {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(248,246,241,0.45);
+  line-height: 1.7;
+}
+
+.rev-points {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.rev-points li {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(248,246,241,0.5);
+  padding-left: 16px;
+  position: relative;
+}
+.rev-points li::before { content:'—'; position:absolute; left:0; color: var(--gold); opacity:0.6; }
+
+/* ── MOAT ── */
+.moat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 60px;
+}
+
+.moat-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 44px 40px;
+  transition: border-color 0.2s, transform 0.25s;
+}
+.moat-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+
+.moat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  margin-bottom: 20px;
+}
+
+.moat-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+
+.moat-desc {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.75;
+}
+
+/* ── ROADMAP ── */
+.roadmap-section { background: var(--paper2); }
+
+.roadmap-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 100px 64px;
+}
+
+.phases {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-top: 60px;
+}
+
+.phase {
+  background: var(--paper2);
+  padding: 44px 32px;
+  transition: background 0.2s;
+  position: relative;
+}
+.phase:hover { background: var(--paper); }
+
+.phase-status {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+.s-done     { background: rgba(28,58,42,0.08); color: var(--green); }
+.s-active   { background: rgba(184,150,90,0.12); color: #8B6914; animation: glow 2s infinite; }
+.s-next     { background: rgba(12,12,11,0.05); color: var(--ink3); }
+.s-future   { background: rgba(12,12,11,0.04); color: rgba(107,107,101,0.6); }
+
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(184,150,90,0.2); }
+  50% { box-shadow: 0 0 0 4px rgba(184,150,90,0); }
+}
+
+.phase-quarter {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+.phase-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+
+.phase-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+
+.phase-ticks {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.phase-tick {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink3);
+  padding-left: 14px;
+  position: relative;
+  opacity: 0.7;
+}
+.phase-tick::before { content:'·'; position:absolute; left:0; }
+.phase-tick.done { color: var(--green); opacity: 1; }
+.phase-tick.done::before { content:'✓'; font-size:10px; }
+
+/* ── TEAM ── */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-top: 60px;
+  max-width: 760px;
+}
+
+.team-card {
+  background: var(--paper);
+  padding: 52px 48px;
+  transition: background 0.2s;
+}
+.team-card:hover { background: var(--paper2); }
+
+.team-initial {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 52px;
+  font-weight: 300;
+  color: var(--ink);
+  opacity: 0.12;
+  line-height: 1;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+.team-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.team-role {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 18px;
+}
+
+.team-bio {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.team-link {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink3);
+  padding-bottom: 2px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.team-link:hover { color: var(--gold); border-color: var(--gold); }
+
+/* ── CTA ── */
+.cta-section {
+  background: var(--green);
+  padding: 0;
+}
+
+.cta-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 100px 64px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 80px;
+  align-items: center;
+}
+
+.cta-h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 4vw, 58px);
+  font-weight: 300;
+  color: var(--paper);
+  line-height: 1.1;
+  margin-bottom: 18px;
+}
+.cta-h2 em { font-style: italic; color: var(--gold2); }
+
+.cta-sub {
+  font-size: 16px;
+  font-weight: 300;
+  color: rgba(248,246,241,0.55);
+  line-height: 1.7;
+  max-width: 480px;
+}
+
+.cta-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; white-space: nowrap; }
+
+.btn-gold {
+  background: var(--gold);
+  color: var(--ink);
+  padding: 16px 40px;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: background 0.2s, transform 0.2s;
+  display: inline-block;
+}
+.btn-gold:hover { background: var(--gold2); transform: translateY(-1px); }
+
+.btn-ghost-white {
+  background: transparent;
+  color: rgba(248,246,241,0.6);
+  padding: 15px 40px;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(248,246,241,0.2);
+  transition: border-color 0.2s, color 0.2s;
+  display: inline-block;
+  text-align: center;
+}
+.btn-ghost-white:hover { border-color: rgba(248,246,241,0.5); color: var(--paper); }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--ink);
+  padding: 40px 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(248,246,241,0.4);
+}
+.footer-logo em { font-style: italic; color: var(--gold); }
+
+.footer-note {
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(248,246,241,0.2);
+  letter-spacing: 0.04em;
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .hero { grid-template-columns: 1fr; }
+  .hero-right { min-height: 400px; }
+  .hero-left { padding: 60px 24px; }
+  .hero-right { padding: 60px 24px; }
+  .section { padding: 80px 24px; }
+  .market-inner { grid-template-columns: 1fr; }
+  .market-grid { grid-template-columns: 1fr; }
+  .model-grid { grid-template-columns: 1fr; }
+  .revenue-callout { grid-template-columns: 1fr; }
+  .moat-grid { grid-template-columns: 1fr; }
+  .phases { grid-template-columns: 1fr 1fr; }
+  .team-grid { grid-template-columns: 1fr; max-width: 400px; }
+  .cta-inner { grid-template-columns: 1fr; }
+  .cta-actions { align-items: flex-start; }
+  .two-col { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 12px; padding: 32px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Auto<em>Pay3</em></a>
+  <ul class="nav-links">
+    <li><a href="#opportunity">Opportunity</a></li>
+    <li><a href="#model">Business Model</a></li>
+    <li><a href="#moat">Moat</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#contact" class="nav-btn">Investor Deck</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-line"></span>
+      Web3 Payment Infrastructure
+    </div>
+
+    <h1 class="hero-title">
+      The missing layer for<br>
+      <strong>recurring payments</strong><br>
+      in Web3.
+    </h1>
+
+    <p class="hero-body">
+      AutoPay3 is a self-custody subscription protocol built on ERC-4337. We give dApps a Stripe-equivalent billing layer — without custodians, unlimited approvals, or user friction. Every payment enforced entirely on-chain.
+    </p>
+
+    <div class="hero-actions">
+      <a href="#contact" class="btn-dark">Request Investor Deck</a>
+      <a href="#opportunity" class="btn-outline">View Opportunity →</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-right-label">Total addressable market</div>
+
+    <div class="hero-stat-big">
+      <div class="num">$600<em>B</em></div>
+      <div class="denom">Global subscription economy — growing 18% annually</div>
+    </div>
+
+    <div class="hero-divider"></div>
+
+    <div class="hero-mini-stats">
+      <div class="mini-stat">
+        <div class="num">$28<em>T</em></div>
+        <div class="label">Stablecoin volume settled on-chain, 2024</div>
+      </div>
+      <div class="mini-stat">
+        <div class="num">15<em>K+</em></div>
+        <div class="label">Active dApps with no native recurring billing</div>
+      </div>
+      <div class="mini-stat">
+        <div class="num">0</div>
+        <div class="label">Trustless self-custody subscription protocols today</div>
+      </div>
+      <div class="mini-stat">
+        <div class="num">~0.5<em>%</em></div>
+        <div class="label">Protocol fee retained on every subscription claim</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- OPPORTUNITY -->
+<div class="market-section" id="opportunity">
+  <div class="market-inner">
+
+    <div class="market-intro reveal">
+      <div class="tag">Market Opportunity</div>
+      <h2 class="h2">A $600B category<br>with <em>no</em> Web3<br>infrastructure.</h2>
+      <br>
+      <p class="lead">Subscriptions are the dominant revenue model of the digital economy. On-chain payment rails now process trillions. What's missing is the protocol layer connecting the two.</p>
+    </div>
+
+    <div class="market-grid reveal">
+      <div class="market-cell">
+        <div class="fig">$600<em>B</em></div>
+        <div class="fig-label">Subscription Economy</div>
+        <div class="fig-desc">Annual recurring revenue across SaaS, fintech, media, and consumer — expanding 18% year over year.</div>
+        <div class="source">Zuora Subscription Economy Index</div>
+      </div>
+      <div class="market-cell">
+        <div class="fig">$28<em>T</em></div>
+        <div class="fig-label">Stablecoin Settlement</div>
+        <div class="fig-desc">Settled on-chain in 2024. The rails exist and are scaling rapidly. Structured billing does not.</div>
+        <div class="source">Visa Onchain Analytics, 2024</div>
+      </div>
+      <div class="market-cell">
+        <div class="fig">15<em>K+</em></div>
+        <div class="fig-label">Underserved dApps</div>
+        <div class="fig-desc">Active protocols and Web3 applications that currently rely on one-time payments or manual billing.</div>
+        <div class="source">DappRadar, 2024</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- PROBLEM / SOLUTION -->
+<section class="section" id="why">
+  <div class="reveal">
+    <div class="tag">The Problem</div>
+    <h2 class="h2">Web3 payments are broken<br>for <em>recurring</em> use cases.</h2>
+    <p class="lead">Every existing solution requires either unlimited token approvals, custodian trust, or active user involvement for each billing cycle. None of these are acceptable for a financial product.</p>
+  </div>
+
+  <div class="two-col reveal">
+    <div class="two-col-cell">
+      <div class="cell-eyebrow problem">Today's Reality</div>
+      <div class="cell-title">How Web3 subscriptions work right now</div>
+      <ul class="cell-list">
+        <li>Unlimited ERC-20 approvals — single exploit drains entire wallet</li>
+        <li>Users must sign every transaction — no true automation</li>
+        <li>Custodial "pull payment" services hold private keys on your behalf</li>
+        <li>Off-chain cron jobs — payments can be blocked, manipulated, or stopped</li>
+        <li>No standardized subscription state — each dApp reinvents the wheel</li>
+        <li>Zero interoperability between platforms or billing periods</li>
+      </ul>
+    </div>
+    <div class="two-col-cell" style="background: var(--paper2);">
+      <div class="cell-eyebrow solution">AutoPay3</div>
+      <div class="cell-title">What AutoPay3 changes</div>
+      <ul class="cell-list solution-list">
+        <li>Tokens held in self-custody smart wallet — zero external approvals</li>
+        <li>Services pull payment automatically via ERC-4337 EntryPoint — no user action</li>
+        <li>Subscription state lives entirely on-chain — transparent, auditable, immutable</li>
+        <li>Hard caps on amount and interval enforced by contract — no overcharging possible</li>
+        <li>One deposit, any number of services — shared wallet, isolated subscriptions</li>
+        <li>Any EVM-compatible chain — deploy once, scale everywhere</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- BUSINESS MODEL -->
+<div class="model-section" id="model">
+  <div class="model-inner">
+    <div class="model-tag reveal">Business Model</div>
+    <h2 class="model-h2 reveal">Open protocol.<br><em>Proprietary</em> moat.</h2>
+    <p class="model-lead reveal">The core contracts are open source — trust and adoption are our distribution channel. The UX layer, developer SDK, and builder network are where the business compounds.</p>
+
+    <div class="model-grid reveal">
+      <div class="model-card">
+        <div class="model-card-num">01</div>
+        <div class="model-card-title">Protocol Fee — Every Claim</div>
+        <div class="model-card-desc">~0.5% withheld on every executed subscription payment. Scales linearly with volume. No ceiling, no per-seat pricing — pure usage-based revenue that grows with the ecosystem.</div>
+      </div>
+      <div class="model-card">
+        <div class="model-card-num">02</div>
+        <div class="model-card-title">SDK Access — dApp Tier</div>
+        <div class="model-card-desc">Developer SDK, React hooks, gas abstraction, and white-label dashboard access. dApps pay a monthly integration fee for managed access, priority support, and co-marketing exposure.</div>
+      </div>
+      <div class="model-card">
+        <div class="model-card-num">03</div>
+        <div class="model-card-title">Enterprise &amp; DAO Module</div>
+        <div class="model-card-desc">Custom SLA, dedicated infrastructure, treasury management modules, and advanced analytics for fintech protocols and DAO treasury operations at scale.</div>
+      </div>
+    </div>
+
+    <div class="revenue-callout reveal">
+      <div class="rev-cell">
+        <div class="rev-cell-label">Layer 1 — Open Source</div>
+        <div class="rev-cell-headline">Contracts are<br><em>trustless by design</em></div>
+        <div class="rev-cell-body">The smart contract suite is fully auditable on-chain. Any developer can verify, fork, or build on top of the protocol. Openness is not a risk — it is the customer acquisition strategy. Enterprise clients and regulated products require verifiable code before integration.</div>
+        <ul class="rev-points">
+          <li>On-chain — no black boxes, no off-chain dependencies</li>
+          <li>Permissionless integration — zero gatekeeping for developers</li>
+          <li>Community audits drive security and brand credibility</li>
+        </ul>
+      </div>
+      <div class="rev-cell" style="background: rgba(248,246,241,0.03);">
+        <div class="rev-cell-label">Layer 2 — Proprietary</div>
+        <div class="rev-cell-headline">UX layer is<br><em>where revenue lives</em></div>
+        <div class="rev-cell-body">The developer SDK, subscriber dashboard, no-code tooling, and builder community are proprietary. Once a dApp ships with the AutoPay3 SDK, migrating to a competing standard is an expensive re-architecture project — creating durable switching cost at scale.</div>
+        <ul class="rev-points">
+          <li>SDK replaces weeks of custom Solidity engineering</li>
+          <li>White-label subscriber portals — co-branded for each dApp</li>
+          <li>Builder network provides co-marketing and referral distribution</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- MOAT -->
+<section class="section" id="moat">
+  <div class="reveal">
+    <div class="tag">Competitive Moat</div>
+    <h2 class="h2">Four compounding<br>advantages.</h2>
+    <p class="lead">Network effects, switching costs, and a developer community that grows wider the more dApps integrate — each advantage reinforces the others.</p>
+  </div>
+
+  <div class="moat-grid reveal">
+    <div class="moat-card">
+      <div class="moat-num">I</div>
+      <div class="moat-title">Shared Subscriber Pool</div>
+      <div class="moat-desc">Every user who creates a funded AutoPay3 wallet can instantly subscribe to any integrated service — no re-onboarding, no new wallet, no new deposit. The network value grows with each new dApp that joins. Users are shared infrastructure, not siloed per-app.</div>
+    </div>
+    <div class="moat-card">
+      <div class="moat-num">II</div>
+      <div class="moat-title">Developer SDK Lock-In</div>
+      <div class="moat-desc">Once a dApp ships subscription flows on the AutoPay3 SDK, replacement requires re-engineering wallet creation, subscription state, gas abstraction, and billing UI. The full stack integration creates meaningful switching cost — not just API key churn.</div>
+    </div>
+    <div class="moat-card">
+      <div class="moat-num">III</div>
+      <div class="moat-title">Open Source as Distribution</div>
+      <div class="moat-desc">Open sourcing the core protocol is a deliberate go-to-market choice. Auditable contracts are a prerequisite for enterprise fintech and DAO treasury integrations. Every fork is a referral. Every contributor is a potential customer. Trust compounds over time.</div>
+    </div>
+    <div class="moat-card">
+      <div class="moat-num">IV</div>
+      <div class="moat-title">Builder Community Flywheel</div>
+      <div class="moat-desc">Early integrating dApps receive co-marketing access, shared user distribution, and co-branded billing portals. This creates a network of advocates who promote AutoPay3 as part of their own growth — turning each new integration into a distribution event.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ROADMAP -->
+<div class="roadmap-section" id="roadmap">
+  <div class="roadmap-inner">
+    <div class="reveal">
+      <div class="tag">Execution Roadmap</div>
+      <h2 class="h2">From <em>protocol</em><br>to platform.</h2>
+      <p class="lead">A disciplined path from working contracts to multi-chain subscription infrastructure — with revenue capture at every stage.</p>
+    </div>
+
+    <div class="phases reveal">
+      <div class="phase">
+        <span class="phase-status s-done">✓ Complete</span>
+        <div class="phase-quarter">Phase 1</div>
+        <div class="phase-title">Core Protocol</div>
+        <div class="phase-desc">Full smart contract suite built, tested, and security-audited. Adversarial test coverage completed.</div>
+        <div class="phase-ticks">
+          <div class="phase-tick done">SubscriptionWallet.sol</div>
+          <div class="phase-tick done">WalletFactory.sol</div>
+          <div class="phase-tick done">ServiceBase.sol</div>
+          <div class="phase-tick done">Adversarial test suite</div>
+          <div class="phase-tick done">Security audit v1</div>
+        </div>
+      </div>
+
+      <div class="phase">
+        <span class="phase-status s-active">In Progress</span>
+        <div class="phase-quarter">Phase 2</div>
+        <div class="phase-title">Testnet &amp; SDK</div>
+        <div class="phase-desc">Testnet deployment, developer SDK release, and first integration partners onboarded.</div>
+        <div class="phase-ticks">
+          <div class="phase-tick">Polygon / Base testnet</div>
+          <div class="phase-tick">JS / TypeScript SDK v1</div>
+          <div class="phase-tick">React hooks + Wagmi</div>
+          <div class="phase-tick">5 pilot dApp partners</div>
+          <div class="phase-tick">Developer documentation</div>
+        </div>
+      </div>
+
+      <div class="phase">
+        <span class="phase-status s-next">Q3 2025</span>
+        <div class="phase-quarter">Phase 3</div>
+        <div class="phase-title">Mainnet + Revenue</div>
+        <div class="phase-desc">Mainnet launch on Base and Polygon. Subscriber dashboard live. Protocol fee collection begins.</div>
+        <div class="phase-ticks">
+          <div class="phase-tick">Base &amp; Polygon mainnet</div>
+          <div class="phase-tick">White-label dashboard</div>
+          <div class="phase-tick">Fee collection active</div>
+          <div class="phase-tick">20+ dApp integrations</div>
+          <div class="phase-tick">Security audit v2</div>
+        </div>
+      </div>
+
+      <div class="phase">
+        <span class="phase-status s-future">Q1 2026</span>
+        <div class="phase-quarter">Phase 4</div>
+        <div class="phase-title">Multi-chain &amp; Enterprise</div>
+        <div class="phase-desc">Expansion to Arbitrum, Optimism, and L1. Enterprise SDK tier targeting DAO treasuries and fintech protocols.</div>
+        <div class="phase-ticks">
+          <div class="phase-tick">Arbitrum / Optimism</div>
+          <div class="phase-tick">Ethereum L1</div>
+          <div class="phase-tick">Enterprise SLA tier</div>
+          <div class="phase-tick">DAO treasury module</div>
+          <div class="phase-tick">Analytics API</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- TEAM -->
+<section class="section" id="team">
+  <div class="reveal">
+    <div class="tag">The Team</div>
+    <h2 class="h2">Built by people who<br>felt the <em>problem</em> firsthand.</h2>
+    <p class="lead">Both founders have built Web3 products and lived the broken payment experience from both sides — as developers and as users.</p>
+  </div>
+
+  <div class="team-grid reveal">
+    <div class="team-card">
+      <div class="team-initial">G</div>
+      <div class="team-name">Garry</div>
+      <div class="team-role">Co-Founder — Business</div>
+      <div class="team-bio">Strategy, go-to-market, and ecosystem partnerships. Building the commercial layer — from early dApp integrations to enterprise deals and investor relations.</div>
+      <a href="#" class="team-link">LinkedIn ↗</a>
+    </div>
+    <div class="team-card">
+      <div class="team-initial">R</div>
+      <div class="team-name">Ruslan</div>
+      <div class="team-role">Co-Founder — Engineering</div>
+      <div class="team-bio">Designed and built the full protocol stack. Solidity architecture, ERC-4337 integration, security model, and SDK. Turning rigorous on-chain logic into accessible infrastructure.</div>
+      <a href="#" class="team-link">LinkedIn ↗</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section" id="contact">
+  <div class="cta-inner">
+    <div class="reveal">
+      <h2 class="cta-h2">Interested in the<br>full <em>investor deck?</em></h2>
+      <p class="cta-sub">We're meeting with early-stage investors and strategic partners. Reach out for the full deck, financial model, and contract documentation.</p>
+    </div>
+    <div class="cta-actions reveal">
+      <a href="mailto:hello@autopay3.xyz" class="btn-gold">Request Deck — hello@autopay3.xyz</a>
+      <a href="#why" class="btn-ghost-white">Read the thesis first</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Auto<em>Pay3</em></div>
+  <div class="footer-note">© 2025 AutoPay3 · ERC-4337 Subscription Protocol</div>
+</footer>
+
+<script>
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => io.observe(el));
+</script>
+</body>
+</html>

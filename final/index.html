@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoPay3 — Subscription Infrastructure for Web3</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+/* ────────────────────────────────────────────
+   TOKENS
+──────────────────────────────────────────── */
+:root {
+  --bg:        #0E1118;
+  --bg-card:   #141720;
+  --bg-raised: #1A1E2A;
+  --border:    rgba(255,255,255,0.07);
+  --border-hi: rgba(255,255,255,0.14);
+
+  --text:      #F0F0EE;
+  --text-2:    #9A9A96;
+  --text-3:    #5C5C58;
+
+  --amber:     #E8A45A;
+  --amber-dim: rgba(232,164,90,0.15);
+  --amber-lo:  rgba(232,164,90,0.07);
+  --green-hi:  #2DB37A;
+  --green-lo:  rgba(45,179,122,0.1);
+  --red-lo:    rgba(220,80,60,0.1);
+  --red-hi:    #DC503C;
+}
+
+/* ────────────────────────────────────────────
+   BASE
+──────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle noise overlay */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:0; opacity:0.4;
+}
+
+/* ────────────────────────────────────────────
+   NAV
+──────────────────────────────────────────── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  height:68px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 0 56px;
+  background: rgba(14,17,24,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  text-decoration: none;
+}
+.logo span { color: var(--amber); }
+
+.nav-links {
+  display:flex; align-items:center; gap:36px; list-style:none;
+}
+.nav-links a {
+  font-size:13.5px; font-weight:400;
+  color: var(--text-2); text-decoration:none;
+  letter-spacing:0.01em;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.nav-cta {
+  height: 36px;
+  padding: 0 20px;
+  background: var(--amber);
+  color: var(--bg) !important;
+  font-weight: 500 !important;
+  border-radius: 6px;
+  font-size: 13px !important;
+  transition: opacity 0.2s, transform 0.2s !important;
+  display:flex; align-items:center;
+}
+.nav-cta:hover { opacity:0.9; transform:translateY(-1px); }
+
+/* ────────────────────────────────────────────
+   HERO
+──────────────────────────────────────────── */
+.hero {
+  position:relative; min-height:100vh;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center;
+  padding: 120px 40px 100px;
+  overflow:hidden;
+  z-index:1;
+}
+
+/* Radial glow — warm, not neon */
+.hero::after {
+  content:'';
+  position:absolute;
+  top:-10%; left:50%; transform:translateX(-50%);
+  width:900px; height:600px;
+  background: radial-gradient(ellipse, rgba(232,164,90,0.09) 0%, transparent 65%);
+  pointer-events:none;
+}
+
+.hero-tag {
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:12px; font-weight:500;
+  letter-spacing:0.1em; text-transform:uppercase;
+  color: var(--amber);
+  background: var(--amber-lo);
+  border: 1px solid rgba(232,164,90,0.2);
+  padding: 6px 16px;
+  border-radius: 100px;
+  margin-bottom:36px;
+  position:relative; z-index:1;
+  opacity:0; animation: up 0.8s 0.05s ease forwards;
+}
+
+.live-dot {
+  width:6px; height:6px; border-radius:50%;
+  background: var(--green-hi);
+  box-shadow: 0 0 6px var(--green-hi);
+  animation: blink 2.4s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+.hero-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(44px, 6.5vw, 88px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  max-width: 860px;
+  position:relative; z-index:1;
+  opacity:0; animation: up 0.8s 0.18s ease forwards;
+}
+.hero-title .a { color: var(--text); }
+.hero-title .b { color: var(--amber); }
+.hero-title .c { color: var(--text-2); font-weight:300; font-style:italic; }
+
+.hero-sub {
+  margin-top:24px;
+  font-size:18px; font-weight:300;
+  color: var(--text-2); line-height:1.7;
+  max-width:520px;
+  position:relative; z-index:1;
+  opacity:0; animation: up 0.8s 0.3s ease forwards;
+}
+
+.hero-btns {
+  margin-top:44px;
+  display:flex; gap:14px; flex-wrap:wrap; justify-content:center;
+  position:relative; z-index:1;
+  opacity:0; animation: up 0.8s 0.42s ease forwards;
+}
+
+.btn-primary {
+  background: var(--amber); color: var(--bg);
+  padding: 14px 32px; border-radius:8px;
+  font-size:15px; font-weight:500;
+  text-decoration:none; letter-spacing:-0.01em;
+  transition: all 0.2s; display:inline-block;
+}
+.btn-primary:hover { box-shadow:0 0 32px rgba(232,164,90,0.4); transform:translateY(-2px); }
+
+.btn-secondary {
+  background: transparent; color: var(--text-2);
+  padding: 13px 32px; border-radius:8px;
+  font-size:15px; font-weight:400;
+  text-decoration:none; letter-spacing:-0.01em;
+  border: 1px solid var(--border-hi);
+  transition: all 0.2s; display:inline-block;
+}
+.btn-secondary:hover { color:var(--text); border-color:rgba(255,255,255,0.25); }
+
+/* stat strip */
+.hero-stats {
+  margin-top: 80px;
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:1px; background:var(--border);
+  border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  width:100%; max-width:860px;
+  position:relative; z-index:1;
+  opacity:0; animation: up 0.8s 0.56s ease forwards;
+}
+
+.h-stat {
+  background: var(--bg-card);
+  padding: 24px 28px;
+  text-align:left;
+  transition: background 0.2s;
+}
+.h-stat:hover { background: var(--bg-raised); }
+
+.h-stat-num {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 28px; font-weight:700;
+  letter-spacing:-0.03em; color: var(--text);
+  margin-bottom:4px;
+}
+.h-stat-num em { color: var(--amber); font-style:normal; }
+.h-stat-label { font-size:12px; color:var(--text-3); line-height:1.4; }
+
+@keyframes up {
+  from { opacity:0; transform:translateY(22px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ────────────────────────────────────────────
+   SHARED
+──────────────────────────────────────────── */
+.divider { border:none; border-top:1px solid var(--border); }
+
+.section {
+  position:relative; z-index:1;
+  max-width:1200px; margin:0 auto;
+  padding: 96px 56px;
+}
+
+.s-label {
+  display:inline-flex; align-items:center; gap:10px;
+  font-size:11px; font-weight:600;
+  letter-spacing:0.14em; text-transform:uppercase;
+  color: var(--amber); margin-bottom:24px;
+}
+.s-label::before { content:''; display:block; width:20px; height:1px; background:var(--amber); }
+
+.s-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(34px, 4vw, 54px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+.s-title em { font-style:italic; font-weight:400; color:var(--text-2); }
+
+.s-body {
+  font-size:16px; font-weight:300; color:var(--text-2);
+  line-height:1.75; max-width:520px;
+}
+
+.reveal {
+  opacity:0; transform:translateY(24px);
+  transition: opacity 0.75s ease, transform 0.75s ease;
+}
+.reveal.vis { opacity:1; transform:none; }
+
+/* ────────────────────────────────────────────
+   PROBLEM / SOLUTION — two columns
+──────────────────────────────────────────── */
+.ps-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:1px; background:var(--border);
+  border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  margin-top:52px;
+}
+
+.ps-col { background:var(--bg-card); padding:44px 40px; }
+.ps-col.b { background:var(--bg-raised); }
+
+.ps-eyebrow {
+  display:inline-block; font-size:11px; font-weight:600;
+  letter-spacing:0.12em; text-transform:uppercase;
+  padding:4px 12px; border-radius:4px; margin-bottom:22px;
+}
+.ps-eyebrow.prob { background:var(--red-lo); color:var(--red-hi); }
+.ps-eyebrow.sol  { background:var(--green-lo); color:var(--green-hi); }
+
+.ps-col h3 {
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-size:22px; font-weight:600;
+  letter-spacing:-0.02em; color:var(--text);
+  margin-bottom:22px; line-height:1.25;
+}
+
+.ps-list { list-style:none; display:flex; flex-direction:column; gap:12px; }
+.ps-list li {
+  font-size:14px; font-weight:300; color:var(--text-2);
+  line-height:1.65; padding-left:20px; position:relative;
+}
+.ps-list li::before { position:absolute; left:0; }
+.ps-list.p li::before { content:'✗'; color:var(--red-hi); opacity:0.6; font-size:12px; }
+.ps-list.s li::before { content:'✓'; color:var(--green-hi); font-size:12px; }
+
+/* ────────────────────────────────────────────
+   MARKET — numbers section
+──────────────────────────────────────────── */
+.market-bg {
+  background: var(--bg-card);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+
+.market-inner {
+  max-width:1200px; margin:0 auto; padding:96px 56px;
+  display:grid; grid-template-columns:380px 1fr; gap:72px; align-items:start;
+}
+
+.market-figures {
+  display:grid; grid-template-columns:1fr 1fr; gap:1px;
+  background:var(--border); border:1px solid var(--border); border-radius:12px; overflow:hidden;
+}
+
+.mfig {
+  background:var(--bg-card); padding:36px 28px;
+  transition: background 0.2s;
+}
+.mfig:hover { background:var(--bg-raised); }
+
+.mfig-num {
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-size:46px; font-weight:700; letter-spacing:-0.04em;
+  line-height:1; color:var(--text); margin-bottom:10px;
+}
+.mfig-num em { color:var(--amber); font-style:normal; }
+
+.mfig-title { font-size:13px; font-weight:500; color:var(--text); margin-bottom:6px; }
+.mfig-desc  { font-size:12px; font-weight:300; color:var(--text-3); line-height:1.55; }
+.mfig-src   { font-size:10px; color:var(--text-3); opacity:0.45; margin-top:12px; letter-spacing:0.04em; text-transform:uppercase; }
+
+/* ────────────────────────────────────────────
+   BUSINESS MODEL
+──────────────────────────────────────────── */
+.model-cards {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:1px; background:var(--border);
+  border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  margin-top:52px;
+}
+
+.mc {
+  background:var(--bg-card); padding:40px 32px;
+  position:relative; overflow:hidden;
+  transition: background 0.2s;
+}
+.mc:hover { background:var(--bg-raised); }
+.mc::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  opacity:0; transition: opacity 0.3s;
+}
+.mc:hover::before { opacity:1; }
+
+.mc-n {
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-size:40px; font-weight:800; letter-spacing:-0.04em;
+  color:rgba(232,164,90,0.12); line-height:1; margin-bottom:22px;
+}
+.mc-title { font-size:16px; font-weight:600; color:var(--text); letter-spacing:-0.01em; margin-bottom:10px; }
+.mc-desc  { font-size:13.5px; font-weight:300; color:var(--text-2); line-height:1.7; }
+
+/* layer split */
+.layer-split {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:1px; background:var(--border);
+  border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  margin-top:24px;
+}
+
+.ls-cell { background:var(--bg-card); padding:36px 32px; }
+.ls-cell.b { background:var(--bg-raised); }
+
+.ls-badge {
+  display:inline-block; font-size:10px; font-weight:600;
+  letter-spacing:0.12em; text-transform:uppercase;
+  padding:4px 12px; border-radius:4px; margin-bottom:18px;
+}
+.ls-badge.open   { background:var(--green-lo); color:var(--green-hi); }
+.ls-badge.closed { background:var(--amber-dim); color:var(--amber); }
+
+.ls-cell h4 {
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-size:18px; font-weight:600; letter-spacing:-0.02em;
+  color:var(--text); margin-bottom:10px;
+}
+.ls-cell p { font-size:13.5px; font-weight:300; color:var(--text-2); line-height:1.7; margin-bottom:16px; }
+.ls-points { list-style:none; display:flex; flex-direction:column; gap:9px; }
+.ls-points li { font-size:13px; font-weight:300; color:var(--text-2); padding-left:16px; position:relative; }
+.ls-points li::before { content:'—'; position:absolute; left:0; color:var(--amber); opacity:0.6; }
+
+/* ────────────────────────────────────────────
+   MOAT
+──────────────────────────────────────────── */
+.moat-bg { background:var(--bg-card); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+
+.moat-grid {
+  display:grid; grid-template-columns:repeat(2,1fr);
+  gap:1px; background:var(--border);
+  border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  margin-top:52px;
+}
+
+.mg {
+  background:var(--bg-card); padding:40px 36px;
+  transition: background 0.2s; position:relative;
+}
+.mg:hover { background:var(--bg-raised); }
+
+.mg-num {
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-size:13px; font-weight:700; letter-spacing:0.06em;
+  color:var(--amber); opacity:0.7; margin-bottom:16px;
+}
+.mg-title { font-size:18px; font-weight:600; letter-spacing:-0.02em; color:var(--text); margin-bottom:12px; }
+.mg-desc  { font-size:14px; font-weight:300; color:var(--text-2); line-height:1.75; }
+
+/* ────────────────────────────────────────────
+   ROADMAP
+──────────────────────────────────────────── */
+.roadmap {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:1px; background:var(--border);
+  border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  margin-top:52px;
+}
+
+.rp {
+  background:var(--bg-card); padding:36px 28px;
+  transition:background 0.2s;
+  position:relative;
+}
+.rp:hover { background:var(--bg-raised); }
+.rp.active::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:var(--amber);
+}
+
+.rp-status {
+  display:inline-block; font-size:10px; font-weight:600;
+  letter-spacing:0.12em; text-transform:uppercase;
+  padding:4px 10px; border-radius:4px; margin-bottom:20px;
+}
+.st-done   { background:var(--green-lo); color:var(--green-hi); }
+.st-active { background:var(--amber-dim); color:var(--amber); }
+.st-next   { background:rgba(255,255,255,0.05); color:var(--text-2); }
+.st-future { background:rgba(255,255,255,0.03); color:var(--text-3); }
+
+.rp-phase { font-size:11px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-3); margin-bottom:6px; }
+.rp-title { font-family:'Bricolage Grotesque', sans-serif; font-size:19px; font-weight:600; letter-spacing:-0.02em; color:var(--text); margin-bottom:10px; line-height:1.2; }
+.rp-desc  { font-size:13px; font-weight:300; color:var(--text-2); line-height:1.6; margin-bottom:18px; }
+
+.rp-ticks { display:flex; flex-direction:column; gap:7px; }
+.rp-tick  { font-size:12px; font-weight:300; color:var(--text-3); padding-left:14px; position:relative; }
+.rp-tick::before { content:'·'; position:absolute; left:0; }
+.rp-tick.done { color:var(--green-hi); opacity:0.8; }
+.rp-tick.done::before { content:'✓'; font-size:10px; }
+
+/* ────────────────────────────────────────────
+   TEAM
+──────────────────────────────────────────── */
+.team-cards {
+  display:grid; grid-template-columns:repeat(2,1fr);
+  gap:20px; max-width:720px; margin-top:52px;
+}
+
+.tc {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:14px; padding:40px 36px;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.tc:hover { border-color:var(--border-hi); transform:translateY(-3px); }
+
+.tc-avatar {
+  width:52px; height:52px; border-radius:50%;
+  background:var(--bg-raised);
+  border:1px solid var(--border-hi);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-size:20px; font-weight:700;
+  color:var(--amber);
+  margin-bottom:22px;
+}
+.tc-name { font-family:'Bricolage Grotesque', sans-serif; font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--text); margin-bottom:4px; }
+.tc-role { font-size:12px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:16px; }
+.tc-bio  { font-size:14px; font-weight:300; color:var(--text-2); line-height:1.7; margin-bottom:22px; }
+.tc-link { font-size:12px; font-weight:500; color:var(--text-2); text-decoration:none; border-bottom:1px solid var(--border-hi); padding-bottom:2px; transition:color 0.2s, border-color 0.2s; }
+.tc-link:hover { color:var(--amber); border-color:var(--amber); }
+
+/* ────────────────────────────────────────────
+   CTA
+──────────────────────────────────────────── */
+.cta-wrap {
+  position:relative; z-index:1;
+  background: linear-gradient(135deg, #17140D 0%, #0E1118 60%);
+  border-top:1px solid var(--border);
+  overflow:hidden;
+}
+.cta-wrap::before {
+  content:''; position:absolute; top:-200px; right:-200px;
+  width:600px; height:600px;
+  background:radial-gradient(ellipse, rgba(232,164,90,0.08) 0%, transparent 65%);
+  pointer-events:none;
+}
+
+.cta-inner {
+  max-width:1200px; margin:0 auto; padding:96px 56px;
+  display:grid; grid-template-columns:1fr auto; gap:80px; align-items:center;
+}
+
+.cta-title {
+  font-family:'Bricolage Grotesque', sans-serif;
+  font-size:clamp(32px,3.8vw,52px); font-weight:700;
+  letter-spacing:-0.03em; color:var(--text); line-height:1.08;
+  margin-bottom:16px;
+}
+.cta-title em { font-style:italic; font-weight:400; color:var(--amber); }
+
+.cta-sub { font-size:16px; font-weight:300; color:var(--text-2); line-height:1.7; max-width:480px; }
+
+.cta-btns { display:flex; flex-direction:column; gap:12px; align-items:stretch; white-space:nowrap; }
+.cta-note { font-size:12px; color:var(--text-3); text-align:center; margin-top:4px; }
+
+/* ────────────────────────────────────────────
+   FOOTER
+──────────────────────────────────────────── */
+footer {
+  border-top:1px solid var(--border);
+  padding:32px 56px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:relative; z-index:1;
+}
+
+.f-logo { font-family:'Bricolage Grotesque', sans-serif; font-size:16px; font-weight:600; letter-spacing:-0.02em; color:var(--text-3); }
+.f-logo span { color:var(--amber); }
+.f-note { font-size:12px; color:var(--text-3); opacity:0.5; }
+
+/* ────────────────────────────────────────────
+   RESPONSIVE
+──────────────────────────────────────────── */
+@media (max-width:900px) {
+  nav { padding:0 24px; }
+  .nav-links { display:none; }
+  .section { padding:64px 24px; }
+  .hero { padding:100px 24px 72px; }
+  .hero-stats { grid-template-columns:repeat(2,1fr); }
+  .ps-grid { grid-template-columns:1fr; }
+  .market-inner { grid-template-columns:1fr; }
+  .market-figures { grid-template-columns:1fr 1fr; }
+  .model-cards { grid-template-columns:1fr; }
+  .layer-split { grid-template-columns:1fr; }
+  .moat-grid { grid-template-columns:1fr; }
+  .roadmap { grid-template-columns:1fr 1fr; }
+  .team-cards { max-width:100%; grid-template-columns:1fr; }
+  .cta-inner { grid-template-columns:1fr; }
+  footer { flex-direction:column; gap:12px; padding:28px 24px; text-align:center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">Auto<span>Pay3</span></a>
+  <ul class="nav-links">
+    <li><a href="#opportunity">Opportunity</a></li>
+    <li><a href="#model">Model</a></li>
+    <li><a href="#moat">Moat</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#contact" class="nav-cta">Investor Deck</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section class="hero">
+  <div class="hero-tag"><span class="live-dot"></span> ERC-4337 · Pre-Seed · Contracts Live</div>
+
+  <h1 class="hero-title">
+    <span class="a">The subscription layer</span><br>
+    <span class="b">Web3 is missing.</span><br>
+    <span class="c">Self-custody. No approvals. Real auto-pay.</span>
+  </h1>
+
+  <p class="hero-sub">
+    AutoPay3 is the protocol that gives any dApp Stripe-equivalent billing — enforced entirely on-chain. Every payment capped, timed, and automated. No custodians. No friction.
+  </p>
+
+  <div class="hero-btns">
+    <a href="#contact" class="btn-primary">Request Investor Deck</a>
+    <a href="#opportunity" class="btn-secondary">Explore the Opportunity →</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="h-stat">
+      <div class="h-stat-num">$600<em>B</em></div>
+      <div class="h-stat-label">Global subscription economy, growing 18% YoY</div>
+    </div>
+    <div class="h-stat">
+      <div class="h-stat-num">$28<em>T</em></div>
+      <div class="h-stat-label">Stablecoin volume settled on-chain in 2024</div>
+    </div>
+    <div class="h-stat">
+      <div class="h-stat-num">15<em>K+</em></div>
+      <div class="h-stat-label">Active dApps with no native recurring billing</div>
+    </div>
+    <div class="h-stat">
+      <div class="h-stat-num">~0.5<em>%</em></div>
+      <div class="h-stat-label">Protocol fee on every executed claim</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════ PROBLEM / SOLUTION ══════════════ -->
+<section class="section" id="why">
+  <div class="reveal">
+    <div class="s-label">The Problem</div>
+    <h2 class="s-title">Web3 has payments.<br>It doesn't have <em>billing</em>.</h2>
+    <p class="s-body">Every existing approach to recurring Web3 payments forces a trade-off: either give up custody, hand over a private key, or manually approve every single charge. None are production-ready for real subscriptions.</p>
+  </div>
+
+  <div class="ps-grid reveal">
+    <div class="ps-col">
+      <span class="ps-eyebrow prob">Today's Reality</span>
+      <h3>How Web3 "subscriptions" work today</h3>
+      <ul class="ps-list p">
+        <li>Unlimited ERC-20 approvals — one exploit drains the entire wallet</li>
+        <li>Users must sign every transaction — no real automation</li>
+        <li>Custodial services hold private keys to execute pulls</li>
+        <li>Off-chain bots — payments can fail, be blocked, or manipulated</li>
+        <li>No standard subscription state — every dApp reinvents the wheel</li>
+      </ul>
+    </div>
+    <div class="ps-col b">
+      <span class="ps-eyebrow sol">AutoPay3</span>
+      <h3>What changes with AutoPay3</h3>
+      <ul class="ps-list s">
+        <li>Tokens stay in your self-custody smart wallet — zero external approvals</li>
+        <li>ERC-4337 EntryPoint pulls automatically — no user action ever needed</li>
+        <li>Subscription state is entirely on-chain — immutable and auditable</li>
+        <li>Hard caps on amount and interval enforced in contract — no overcharging</li>
+        <li>One deposit, any number of services — shared wallet, isolated subs</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════ MARKET ══════════════ -->
+<div class="market-bg" id="opportunity">
+  <div class="market-inner">
+    <div class="reveal">
+      <div class="s-label">Market Size</div>
+      <h2 class="s-title">A massive gap<br>between Web3 rails<br>and Web3 <em>billing</em>.</h2>
+      <p class="s-body" style="margin-top:16px;">Stablecoin payment rails are already processing trillions. The infrastructure to turn those rails into structured, recurring revenue streams does not yet exist.</p>
+    </div>
+    <div class="market-figures reveal">
+      <div class="mfig">
+        <div class="mfig-num">$600<em>B</em></div>
+        <div class="mfig-title">Subscription Economy</div>
+        <div class="mfig-desc">Global annual recurring revenue across SaaS, fintech, media — 18% YoY growth.</div>
+        <div class="mfig-src">Zuora Subscription Economy Index</div>
+      </div>
+      <div class="mfig">
+        <div class="mfig-num">$28<em>T</em></div>
+        <div class="mfig-title">On-Chain Stablecoin Volume</div>
+        <div class="mfig-desc">Settled on-chain in 2024. Rails exist and scale. Structured billing does not.</div>
+        <div class="mfig-src">Visa Onchain Analytics 2024</div>
+      </div>
+      <div class="mfig">
+        <div class="mfig-num">15<em>K+</em></div>
+        <div class="mfig-title">Underserved dApps</div>
+        <div class="mfig-desc">Active protocols with no native recurring billing option today.</div>
+        <div class="mfig-src">DappRadar 2024</div>
+      </div>
+      <div class="mfig">
+        <div class="mfig-num">0</div>
+        <div class="mfig-title">Trustless Competitors</div>
+        <div class="mfig-desc">No self-custody, fully on-chain, permissionless subscription protocol exists today.</div>
+        <div class="mfig-src">Protocol analysis, 2025</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════ BUSINESS MODEL ══════════════ -->
+<section class="section" id="model">
+  <div class="reveal">
+    <div class="s-label">Business Model</div>
+    <h2 class="s-title">Open protocol.<br><em>Proprietary</em> distribution.</h2>
+    <p class="s-body">Core contracts are open source — auditable code is the trust that unlocks enterprise adoption. The SDK, dashboard, and community layer are where the business compounds.</p>
+  </div>
+
+  <div class="model-cards reveal">
+    <div class="mc">
+      <div class="mc-n">01</div>
+      <div class="mc-title">Protocol Fee on Every Claim</div>
+      <div class="mc-desc">~0.5% withheld on every executed subscription payment. Pure usage-based revenue — scales linearly with ecosystem volume, no per-seat ceiling.</div>
+    </div>
+    <div class="mc">
+      <div class="mc-n">02</div>
+      <div class="mc-title">Developer SDK Access</div>
+      <div class="mc-desc">Monthly fee for SDK access, React hooks, gas abstraction, white-label dashboards, and co-marketing. Once integrated, replacing the full billing stack is expensive.</div>
+    </div>
+    <div class="mc">
+      <div class="mc-n">03</div>
+      <div class="mc-title">Enterprise & DAO Module</div>
+      <div class="mc-desc">Custom SLA, dedicated infrastructure, treasury management modules, and analytics API targeting fintech protocols and DAO operations at scale.</div>
+    </div>
+  </div>
+
+  <div class="layer-split reveal">
+    <div class="ls-cell">
+      <span class="ls-badge open">Open Source</span>
+      <h4>Onchain Protocol — Trust as Distribution</h4>
+      <p>The smart contract suite is fully auditable on-chain. Enterprise integrations and regulated fintech products require verifiable code before committing. Open source is the customer acquisition strategy, not a liability.</p>
+      <ul class="ls-points">
+        <li>Permissionless — any dApp integrates without approval</li>
+        <li>Community audits build security reputation over time</li>
+        <li>Forks increase visibility; contributors become customers</li>
+      </ul>
+    </div>
+    <div class="ls-cell b">
+      <span class="ls-badge closed">Proprietary Moat</span>
+      <h4>UX & SDK Layer — Where Revenue Lives</h4>
+      <p>The developer SDK, subscriber dashboard, and builder community are proprietary. A dApp that ships on AutoPay3 would need to re-engineer wallet creation, subscription state, gas abstraction, and billing UI to migrate away.</p>
+      <ul class="ls-points">
+        <li>SDK replaces weeks of custom Solidity engineering</li>
+        <li>White-label subscriber portals — embedded in each dApp</li>
+        <li>Builder network provides co-marketing and shared distribution</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════ MOAT ══════════════ -->
+<div class="moat-bg" id="moat">
+  <section class="section">
+    <div class="reveal">
+      <div class="s-label">Competitive Moat</div>
+      <h2 class="s-title">Four advantages that<br>compound with every<br><em>new integration</em>.</h2>
+    </div>
+
+    <div class="moat-grid reveal">
+      <div class="mg">
+        <div class="mg-num">01</div>
+        <div class="mg-title">Shared Subscriber Pool</div>
+        <div class="mg-desc">Every user who creates a funded AutoPay3 wallet can subscribe to any integrated service instantly — no new wallet, no re-onboarding. Network value grows nonlinearly with each new dApp that joins.</div>
+      </div>
+      <div class="mg">
+        <div class="mg-num">02</div>
+        <div class="mg-title">SDK Switching Cost</div>
+        <div class="mg-desc">Once a dApp ships subscription flows on the AutoPay3 SDK, migration requires re-engineering the full billing stack — wallet creation, subscription state, gas abstraction, and billing UI. That's a real cost.</div>
+      </div>
+      <div class="mg">
+        <div class="mg-num">03</div>
+        <div class="mg-title">Open Source as Flywheel</div>
+        <div class="mg-desc">Auditable contracts unlock enterprise and DAO integrations that require verified code. Every fork raises awareness. Every contributor is a potential integration. Credibility compounds over time.</div>
+      </div>
+      <div class="mg">
+        <div class="mg-num">04</div>
+        <div class="mg-title">Builder Community Layer</div>
+        <div class="mg-desc">Early-adopting dApps receive co-marketing access and shared user distribution. Every new integration becomes a distribution event — the ecosystem promotes itself organically.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════ ROADMAP ══════════════ -->
+<section class="section" id="roadmap">
+  <div class="reveal">
+    <div class="s-label">Roadmap</div>
+    <h2 class="s-title">Protocol to platform.<br><em>Revenue at every stage.</em></h2>
+    <p class="s-body">A disciplined path from working contracts to multi-chain subscription infrastructure — with investor-ready milestones at each phase.</p>
+  </div>
+
+  <div class="roadmap reveal">
+    <div class="rp">
+      <span class="rp-status st-done">✓ Complete</span>
+      <div class="rp-phase">Phase 1</div>
+      <div class="rp-title">Core Protocol</div>
+      <div class="rp-desc">Full contract suite built, tested, adversarially audited.</div>
+      <div class="rp-ticks">
+        <div class="rp-tick done">SubscriptionWallet.sol</div>
+        <div class="rp-tick done">WalletFactory.sol</div>
+        <div class="rp-tick done">ServiceBase.sol</div>
+        <div class="rp-tick done">Adversarial test suite</div>
+        <div class="rp-tick done">Security audit v1</div>
+      </div>
+    </div>
+    <div class="rp active">
+      <span class="rp-status st-active">In Progress</span>
+      <div class="rp-phase">Phase 2</div>
+      <div class="rp-title">SDK & Testnet</div>
+      <div class="rp-desc">Testnet deploy, developer SDK, first 5 integration partners.</div>
+      <div class="rp-ticks">
+        <div class="rp-tick">Polygon / Base testnet</div>
+        <div class="rp-tick">JS / TS SDK v1</div>
+        <div class="rp-tick">React + Wagmi hooks</div>
+        <div class="rp-tick">5 pilot dApp partners</div>
+        <div class="rp-tick">Developer docs</div>
+      </div>
+    </div>
+    <div class="rp">
+      <span class="rp-status st-next">Q3 2025</span>
+      <div class="rp-phase">Phase 3</div>
+      <div class="rp-title">Mainnet + Revenue</div>
+      <div class="rp-desc">Mainnet launch, billing dashboard live, fee collection begins.</div>
+      <div class="rp-ticks">
+        <div class="rp-tick">Base & Polygon mainnet</div>
+        <div class="rp-tick">White-label dashboard</div>
+        <div class="rp-tick">Fee collection active</div>
+        <div class="rp-tick">20+ dApp integrations</div>
+        <div class="rp-tick">Security audit v2</div>
+      </div>
+    </div>
+    <div class="rp">
+      <span class="rp-status st-future">Q1 2026</span>
+      <div class="rp-phase">Phase 4</div>
+      <div class="rp-title">Multi-chain & Enterprise</div>
+      <div class="rp-desc">Arbitrum, Optimism, L1 expansion. Enterprise SLA tier.</div>
+      <div class="rp-ticks">
+        <div class="rp-tick">Arbitrum / Optimism</div>
+        <div class="rp-tick">Ethereum L1</div>
+        <div class="rp-tick">Enterprise SDK tier</div>
+        <div class="rp-tick">DAO treasury module</div>
+        <div class="rp-tick">Analytics API</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════ TEAM ══════════════ -->
+<section class="section" id="team">
+  <div class="reveal">
+    <div class="s-label">The Team</div>
+    <h2 class="s-title">Built by people who felt<br>the problem <em>firsthand</em>.</h2>
+    <p class="s-body">Both founders have shipped Web3 products and experienced broken payment infrastructure from both sides — as developers and as users.</p>
+  </div>
+
+  <div class="team-cards reveal">
+    <div class="tc">
+      <div class="tc-avatar">G</div>
+      <div class="tc-name">Garry</div>
+      <div class="tc-role">Co-Founder — Business</div>
+      <div class="tc-bio">Strategy, partnerships, and go-to-market. Building the commercial layer — from early dApp integrations to enterprise deals and investor relations.</div>
+      <a href="#" class="tc-link">LinkedIn ↗</a>
+    </div>
+    <div class="tc">
+      <div class="tc-avatar">R</div>
+      <div class="tc-name">Ruslan</div>
+      <div class="tc-role">Co-Founder — Engineering</div>
+      <div class="tc-bio">Designed and built the full protocol stack. Solidity architecture, ERC-4337 integration, security model, and SDK. Turning on-chain logic into accessible infrastructure.</div>
+      <a href="#" class="tc-link">LinkedIn ↗</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CTA ══════════════ -->
+<div class="cta-wrap" id="contact">
+  <div class="cta-inner">
+    <div class="reveal">
+      <h2 class="cta-title">Interested in the<br><em>full investor deck?</em></h2>
+      <p class="cta-sub">We're meeting with early-stage investors and strategic partners. Reach out for the full deck, financial model, and contract documentation.</p>
+    </div>
+    <div class="cta-btns reveal">
+      <a href="mailto:hello@autopay3.xyz" class="btn-primary">Request Deck →</a>
+      <a href="#why" class="btn-secondary">Read the Thesis</a>
+      <div class="cta-note">hello@autopay3.xyz</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-logo">Auto<span>Pay3</span></div>
+  <div class="f-note">© 2025 AutoPay3 · ERC-4337 Subscription Protocol</div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
